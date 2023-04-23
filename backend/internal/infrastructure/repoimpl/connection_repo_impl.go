@@ -103,6 +103,9 @@ func (c *ConnectionRepoImpl) GetConnection(conn *model.Connection) ([]model.Conn
 	if pc.CertificateID > 0 {
 		tx.Where("certificate_id = ?", pc.CertificateID)
 	}
+	if pc.Active > 0 {
+		tx.Where("active = ?", pc.Active)
+	}
 
 	list := po.NewConnectionList()
 	tx.Find(&list)

@@ -29,6 +29,17 @@ type ConnectionResponse struct {
 	CreatedAt       string `json:"created_at"`
 }
 
+type State int
+
+const (
+	ConnectSuccess State = iota + 1
+	ConnectFailed
+)
+
+type ConnectionState struct {
+	State State `json:"state"`
+}
+
 type ConnectionResponseList []ConnectionResponse
 
 func NewConnectionResponseList() ConnectionResponseList {

@@ -20,7 +20,7 @@ Menu;
 
 <style>
 .container {
-    height: 90%;
+    height: 100%;
 }
 .header {
     color: #f5f7fa;
@@ -31,7 +31,7 @@ Menu;
     width: "20px";
     color: #f5f7fa;
     background-color: #223749;
-    height: 850px;
+    height: 100%;
 }
 
 .main {

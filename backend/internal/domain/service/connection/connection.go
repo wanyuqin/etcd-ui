@@ -30,6 +30,14 @@ func NewConnectionService(cfgs ...ConnectionConfiguration) (*ConnectionService, 
 	return cs, nil
 }
 
+func DefaultConnectionService() (*ConnectionService, error) {
+	cfgs := []ConnectionConfiguration{
+		WithMysqlCertificateRepository(),
+		WithMysqlConnectionRepository(),
+	}
+	return NewConnectionService(cfgs...)
+}
+
 func WithConnectionRepository(cr repository.ConnectionRepo) ConnectionConfiguration {
 	return func(cs *ConnectionService) error {
 		cs.connection = cr
@@ -137,4 +145,21 @@ func (c *ConnectionService) ActiveConnection(id uint, conn *model.Connection) er
 	// 数据更新
 	return c.connection.ActiveConnection(conn)
 
+}
+
+func (c *ConnectionService) InitConnection() error {
+	conn := model.NewConnection()
+	conn.Active = model.Active
+	connection, err := c.connection.GetConnection(conn)
+	if err != nil {
+		logger.Errorf("GetConnection failed: %v", err)
+		return err
+	}
+
+	if len(connection) == 0 {
+		return errors.New("no active connection")
+	}
+
+	conn = &connection[0]
+	return c.ActiveConnection(conn.ID, conn)
 }

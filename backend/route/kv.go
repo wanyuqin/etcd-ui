@@ -14,5 +14,6 @@ func KvRoute(r *gin.RouterGroup) {
 		v1.POST("", handler.PutKV)
 		v1.DELETE("", handler.DeleteKV)
 		v1.POST("/watch", handler.WatchKey)
+
 	}
 }

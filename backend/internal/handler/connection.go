@@ -25,11 +25,7 @@ func CreateConnection(c *gin.Context) {
 	cc.ID = param.CertificateId
 	conn.Certificate = *cc
 
-	cfgs := []connection.ConnectionConfiguration{
-		connection.WithMysqlCertificateRepository(),
-		connection.WithMysqlConnectionRepository(),
-	}
-	cs, err := connection.NewConnectionService(cfgs...)
+	cs, err := connection.DefaultConnectionService()
 	if err != nil {
 		xgin.Failed(c, err)
 		return
@@ -55,12 +51,8 @@ func UpdateConnection(c *gin.Context) {
 	mc := model.NewConnection()
 	copier.Copy(mc, conn)
 
-	cfgs := []connection.ConnectionConfiguration{
-		connection.WithMysqlCertificateRepository(),
-		connection.WithMysqlConnectionRepository(),
-	}
-	sc, err := connection.NewConnectionService(cfgs...)
-	err = sc.ActiveConnection(uint(id), mc)
+	cs, err := connection.DefaultConnectionService()
+	err = cs.ActiveConnection(uint(id), mc)
 	xgin.Response(c, nil, err)
 }
 
@@ -71,7 +63,7 @@ func GetConnection(c *gin.Context) {
 		xgin.Failed(c, err)
 		return
 	}
-	cs, err := connection.NewConnectionService(connection.WithMysqlConnectionRepository())
+	cs, err := connection.DefaultConnectionService()
 	conn, err := cs.GetConnection(uint(id))
 	xgin.Response(c, conn, err)
 }
@@ -83,7 +75,7 @@ func DeleteConnection(c *gin.Context) {
 		return
 	}
 
-	cs, err := connection.NewConnectionService(connection.WithMysqlConnectionRepository())
+	cs, err := connection.DefaultConnectionService()
 	if err != nil {
 		xgin.Failed(c, err)
 		return
@@ -107,19 +99,34 @@ func ListConnection(c *gin.Context) {
 
 	p := valobj.NewPageInfo()
 	copier.Copy(p, query)
-	cfgs := []connection.ConnectionConfiguration{
-		connection.WithMysqlConnectionRepository(),
-		connection.WithMysqlCertificateRepository(),
-	}
-	sc, err := connection.NewConnectionService(cfgs...)
+	cs, err := connection.DefaultConnectionService()
 	if err != nil {
 		xgin.Failed(c, err)
 		return
 	}
 
-	cnn, count, err := sc.ListConnection(conn, p)
+	cnn, count, err := cs.ListConnection(conn, p)
 
 	cl := dto.NewConnectionResponseListByModel(cnn)
 	xgin.ResponsePage(c, cl, count, err)
 
+}
+
+func InitConnection(c *gin.Context) {
+	cs, err := connection.DefaultConnectionService()
+	if err != nil {
+		xgin.Failed(c, err)
+		return
+	}
+	err = cs.InitConnection()
+	if err != nil {
+		xgin.Response(c, dto.ConnectionState{
+			State: dto.ConnectFailed,
+		}, err)
+		return
+	}
+
+	xgin.Response(c, dto.ConnectionState{
+		State: dto.ConnectSuccess,
+	}, err)
 }

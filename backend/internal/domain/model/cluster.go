@@ -1,10 +1,13 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	humanize "github.com/dustin/go-humanize"
+	"github.com/jinzhu/copier"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -39,4 +42,30 @@ func NewClusterStatus(status *clientv3.StatusResponse) ClusterStatus {
 	}
 
 	return cs
+}
+
+type Member struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	PeerURLs   []string `json:"peer_URLs"` // 集群内部通信地址
+	ClientURLs []string `json:"client_URLs"`
+	IsLearner  bool     `json:"is_learner"`
+}
+
+type MemberList []Member
+
+func NewMemberList(em []*etcdserverpb.Member) MemberList {
+	ms := make([]Member, len(em))
+	for i := range em {
+		copier.Copy(&ms[i], *em[i])
+		ms[i].ID = fmt.Sprintf("%x", em[i].ID)
+	}
+	return ms
+}
+
+func CheckPeerAddrs(peerAddrs []string) error {
+	if len(peerAddrs) == 0 {
+		return errors.New("peer address is null")
+	}
+	return nil
 }

@@ -10,9 +10,9 @@ import (
 	"github.com/wanyuqin/etcd-ui/backend/logger"
 )
 
-func (c EtcdCli) ListKeys() ([]model.KeyTree, error) {
+func (e EtcdCli) ListKeys() ([]model.KeyTree, error) {
 	ks := make([]string, 0)
-	res, err := c.Client.Get(c.Ctx, "", clientv3.WithKeysOnly(), clientv3.WithPrefix())
+	res, err := e.Client.Get(e.Ctx, "", clientv3.WithKeysOnly(), clientv3.WithPrefix())
 	if err != nil {
 		logger.Errorf("etcd v3 get failed: %v", err)
 		return nil, err
@@ -25,8 +25,8 @@ func (c EtcdCli) ListKeys() ([]model.KeyTree, error) {
 	return model.NewKeyTree(ks), nil
 }
 
-func (c EtcdCli) GetKey(name string) (*model.KV, error) {
-	res, err := c.Client.Get(c.Ctx, name)
+func (e EtcdCli) GetKey(name string) (*model.KV, error) {
+	res, err := e.Client.Get(e.Ctx, name)
 	if err != nil {
 		logger.Errorf("etcd v3 get failed: %v", err)
 		return nil, err
@@ -34,7 +34,7 @@ func (c EtcdCli) GetKey(name string) (*model.KV, error) {
 	if len(res.Kvs) > 0 {
 		kv := model.NewKV(res.Kvs[0])
 		if kv.Lease != 0 {
-			tl, err := c.Client.TimeToLive(c.Ctx, clientv3.LeaseID(kv.Lease))
+			tl, err := e.Client.TimeToLive(e.Ctx, clientv3.LeaseID(kv.Lease))
 			if err != nil {
 				logger.Errorf("etcd v3 TimeToLive failed: %v", err)
 				return nil, err
@@ -48,13 +48,13 @@ func (c EtcdCli) GetKey(name string) (*model.KV, error) {
 	return nil, err
 }
 
-func (c EtcdCli) PutKey(kv model.KV) error {
+func (e EtcdCli) PutKey(kv model.KV) error {
 	ops := make([]clientv3.OpOption, 0)
 	if kv.Ttl > 0 {
 		// 创建一个租约对象
-		lease := clientv3.NewLease(c.Client)
+		lease := clientv3.NewLease(e.Client)
 		// 生成一个新的租约
-		ls, err := lease.Grant(c.Ctx, kv.Ttl)
+		ls, err := lease.Grant(e.Ctx, kv.Ttl)
 		if err != nil {
 			logger.Errorf("grant lease failed: %v", err)
 			return err
@@ -62,7 +62,7 @@ func (c EtcdCli) PutKey(kv model.KV) error {
 		ops = append(ops, clientv3.WithLease(ls.ID))
 	}
 
-	_, err := c.Client.Put(c.Ctx, kv.Key, kv.Value, ops...)
+	_, err := e.Client.Put(e.Ctx, kv.Key, kv.Value, ops...)
 	if err != nil {
 		logger.Errorf("put key %s failed: %v", kv.Key, err)
 		return err
@@ -70,9 +70,9 @@ func (c EtcdCli) PutKey(kv model.KV) error {
 	return nil
 }
 
-func (c EtcdCli) DeleteKey(name string) (int64, error) {
+func (e EtcdCli) DeleteKey(name string) (int64, error) {
 	var deleted int64
-	res, err := c.Client.Delete(c.Ctx, name)
+	res, err := e.Client.Delete(e.Ctx, name)
 	if err != nil {
 		logger.Errorf("etcd v3 delete failed: %v", err)
 		return deleted, err
@@ -81,13 +81,13 @@ func (c EtcdCli) DeleteKey(name string) (int64, error) {
 	return deleted, nil
 }
 
-func (c EtcdCli) WatchKey(name string) {
+func (e EtcdCli) WatchKey(name string) {
 	logger.Debugf("staring to listing %s", name)
-	go c.watchKey(name)
+	go e.watchKey(name)
 }
 
-func (c EtcdCli) watchKey(name string) {
-	ch := c.Client.Watch(c.Ctx, name)
+func (e EtcdCli) watchKey(name string) {
+	ch := e.Client.Watch(e.Ctx, name)
 	for {
 		select {
 		case msg := <-ch:

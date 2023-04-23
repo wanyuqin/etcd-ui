@@ -17,13 +17,12 @@ const (
 )
 
 type Client struct {
+	ID  string
 	Hub *Hub
-
 	//  websocket 连接
-	Conn *websocket.Conn
-
-	//
-	Send chan []byte
+	Conn   *websocket.Conn
+	Send   chan []byte
+	Ticker *time.Ticker
 }
 
 func (c *Client) Notify() {
@@ -35,7 +34,7 @@ func (c *Client) Notify() {
 	for {
 		select {
 		case message, ok := <-c.Send:
-
+			logger.Debugf("online client %v", c.Hub.OnlineClientCount())
 			if c.Conn == nil {
 				return
 			}
@@ -65,13 +64,55 @@ func (c *Client) Notify() {
 				}
 			}
 		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				logger.Errorf("write ping message failed: %v", err)
 				return
 			}
+		}
+	}
+}
 
+func (c *Client) ReadPump() {
+	defer func() {
+		c.Ticker.Stop()
+		c.Hub.Unregister <- c
+		c.Conn.Close()
+	}()
+
+	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetPongHandler(func(string) error {
+		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			logger.Errorf("%v", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				logger.Errorf("%v", err)
+			}
+			break
+		}
+		logger.Debugf(" %s client send msg %s , total client %v", c.ID, string(message), len(c.Hub.Clients))
+		if string(message) == "ping" {
+			c.Send <- []byte("pong")
+		}
+
+		c.Ticker.Reset(10 * time.Second)
+	}
+}
+
+func (c *Client) HearBeat() {
+	defer func() {
+		c.Ticker.Stop()
+		c.Hub.Unregister <- c
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case <-c.Ticker.C:
+			logger.Debugf("client %s offline ", c.ID)
+			return
 		}
 	}
 }

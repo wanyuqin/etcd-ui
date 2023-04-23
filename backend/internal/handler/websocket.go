@@ -2,8 +2,10 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
 	"github.com/wanyuqin/etcd-ui/backend/hub"
@@ -25,12 +27,18 @@ func Connect(c *gin.Context) {
 		logger.Errorf("upgrade failed: %v", err)
 		return
 	}
-	client := &hub.Client{
-		Hub:  hub.H,
-		Conn: conn,
-		Send: make(chan []byte, 256),
-	}
-	client.Hub.Register <- client
+	uid := uuid.New()
 
+	client := &hub.Client{
+		ID:     uid.String(),
+		Hub:    hub.H,
+		Conn:   conn,
+		Send:   make(chan []byte, 256),
+		Ticker: time.NewTicker(10 * time.Second),
+	}
+	logger.Debugf("%s client register", client.ID)
+	client.Hub.Register <- client
 	go client.Notify()
+	go client.ReadPump()
+	go client.HearBeat()
 }

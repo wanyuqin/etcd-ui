@@ -7,5 +7,5 @@ import (
 )
 
 func WebSocket(r *gin.RouterGroup) {
-	r.GET("/connection", handler.Connect)
+	r.Any("/connection", handler.Connect)
 }

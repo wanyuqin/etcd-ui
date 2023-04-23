@@ -163,6 +163,12 @@ const activeConnection = (row) => {
         active: 1,
     };
     updateConnection(updateConn).then((response) => {
+        if (response.data.code == "0000") {
+            ElMessage({
+                message: "连接成功",
+                type: "success",
+            });
+        }
         getConnectionList();
     });
 };

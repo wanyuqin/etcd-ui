@@ -1,6 +1,6 @@
 <template>
-    <el-row :gutter="20">
-        <el-col :span="2">
+    <el-row>
+        <el-col :span="1">
             <el-button type="primary" size="small" @click="openPutKeyForm">添 加</el-button>
 
         </el-col>
@@ -10,12 +10,7 @@
     </el-row>
     <el-row :gutter="20">
         <el-col :span="12">
-
-            <!-- 左侧key 滚动 -->
-            <!-- <el-scrollbar height="900">
-                <div v-for="item in treeData" :key="item" @click="getKeyByName(item)"><span>{{ item.label }}</span></div>
-            </el-scrollbar> -->
-            <el-input v-model="query" placeholder="输入关键字" @input="onQueryChanged" />
+            <el-input v-model="query" placeholder="输入关键字" @input="onQueryChanged" disabled="true" />
             <el-tree-v2 ref="treeRef" :filter-method="filterKey" class="el-tree" :data="treeData" :props="props" :height="600" @node-click="getKeyByName">
             </el-tree-v2>
         </el-col>
@@ -24,15 +19,15 @@
             <!-- 右侧内容  -->
             <el-col :span="12">
                 <el-row :gutter="50">
-                    <el-col :span="6">
+                    <el-col :span="12">
                         <el-row>
-                            <el-col :span="3">
-                                <el-input v-model="kv.key" placeholder="" style="width: 70px"></el-input>
+                            <el-col :span="24">
+                                <el-input v-model="kv.key" placeholder="" style="width: 100%"></el-input>
                             </el-col>
                         </el-row>
                     </el-col>
                     <el-col :span="12">
-                        <el-row :gutter="50">
+                        <el-row>
                             <el-col :span="6">
                                 <el-button size="small" type="primary" @click="setTTL">设置TTL</el-button>
                             </el-col>
@@ -47,13 +42,29 @@
                             </el-col>
                         </el-row>
                     </el-col>
+
+                </el-row>
+
+                <el-row :gutter="10">
+                    <el-col :span="8">
+                        Version
+                        <el-input v-model="kv.version" disabled />
+                    </el-col>
+                    <el-col :span="8">
+                        CreteReversion
+                        <el-input v-model="kv.create_revision" disabled />
+                    </el-col>
+                    <el-col :span="8">
+                        ModReversion
+                        <el-input v-model="kv.mod_revision" disabled />
+                    </el-col>
                 </el-row>
                 <div style="margin: 1px 0"></div>
 
                 <!-- 格式化选择框 -->
-                <el-select v-model="value" class="m-2" placeholder="格式化" size="default" @change="formatJson">
+                <!-- <el-select v-model="value" class="m-2" placeholder="格式化" size="default" @change="formatJson">
                     <el-option v-for="item in selectorOption" :key="item.key" :label="item.label" :value="item.value" />
-                </el-select>
+                </el-select> -->
 
                 <!-- 内容区域 -->
                 <el-input class="content-textarea" v-model="kv.value" placeholder="Please input" show-word-limit type="textarea" input-style="height:500px" />
@@ -126,6 +137,8 @@ import { ElLoading, ElMessage } from "element-plus";
 import { Refresh } from "@element-plus/icons-vue";
 import { listKv, getKey, putKey, deleteKey, watchKey } from "@/api/kv.js";
 import { ElTreeV2 } from "element-plus";
+import hljs from "highlight.js";
+import "highlight.js/styles/dark.css";
 
 const props = ref({
     value: "id",
@@ -204,9 +217,9 @@ const doDeleteKey = () => {
 };
 
 const doWatchKey = () => {
-    watchKey(kv.value.key).then(response=>{
-        watchDialogVisible.value = false
-    })
+    watchKey(kv.value.key).then((response) => {
+        watchDialogVisible.value = false;
+    });
 };
 
 const formatJson = (param) => {
@@ -245,6 +258,7 @@ const saveKey = () => {
                 message: "保存成功",
                 type: "success",
             });
+            reloadKey();
         }
     });
 };

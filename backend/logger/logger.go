@@ -18,25 +18,25 @@ func init() {
 }
 
 func Debug(args ...interface{}) {
-	log.Debug(args)
+	log.Debug(args...)
 }
 
 func Debugf(format string, args ...interface{}) {
-	log.Debugf(format, args)
+	log.Debugf(format, args...)
 }
 
 func Error(args ...interface{}) {
-	log.Error(args)
+	log.Error(args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	log.Errorf(format, args)
+	log.Errorf(format, args...)
 }
 
 func Warn(args ...interface{}) {
-	log.Warn(args)
+	log.Warn(args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	log.Warnf(format, args)
+	log.Warnf(format, args...)
 }

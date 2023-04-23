@@ -14,5 +14,6 @@ func ConnectionRoute(r *gin.RouterGroup) {
 		v1.PUT("/:id", handler.UpdateConnection)
 		v1.GET("/:id", handler.GetConnection)
 		v1.DELETE("/:id", handler.DeleteConnection)
+		v1.POST("/init", handler.InitConnection)
 	}
 }
